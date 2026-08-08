@@ -251,7 +251,7 @@ function chg(id,delta){
   render();
 }
 // ═══ ФОТО ═══
-// Ім'я файлу з назви моделі: "HYBRO S 1K BS" → img/hybro-s-1k-bs.jpg
+// Імя файлу з назви моделі: "HYBRO S 1K BS" → img/hybro-s-1k-bs.png
 function photoSlug(name){
   return name
     .replace('Тримач HYBRO','trymach')
@@ -261,7 +261,7 @@ function photoSlug(name){
 function openPhoto(name){
   document.getElementById('photo-title').textContent=name;
   const body=document.getElementById('photo-body');
-  body.innerHTML=`<img src="img/${photoSlug(name)}.jpg" alt="${name}" onerror="this.outerHTML='<div class=photo-missing>Фото буде додано найближчим часом</div>'">`;
+  body.innerHTML=`<img src="img/${photoSlug(name)}.png" alt="${name}" onerror="this.outerHTML='<div class=photo-missing>Фото буде додано найближчим часом</div>'">`;
   document.getElementById('photo-modal').classList.add('show');
 }
 function closePhoto(){document.getElementById('photo-modal').classList.remove('show');}
