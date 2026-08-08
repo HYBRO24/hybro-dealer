@@ -26,7 +26,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .margin-badge{display:inline-block;margin-top:.6rem;padding:4px 12px;font-size:13px;font-weight:600;color:var(--green);background:rgba(0,135,90,.08);border:1px solid rgba(0,135,90,.3);border-radius:var(--radius)}
 /* Рівні знижок */
 .tiers{display:flex;gap:6px;flex-wrap:wrap;margin-top:.75rem}
-.tier{flex:1;min-width:96px;padding:.5rem .6rem;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);text-align:center}
+.tier{flex:1;min-width:96px;padding:.5rem .6rem;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);text-align:center;cursor:pointer;transition:all .12s}
+.tier:hover{background:var(--surface2)}
 .tier .t-disc{font-size:15px;font-weight:600;color:var(--text2)}
 .tier .t-min{font-size:11px;color:var(--text3);margin-top:1px}
 .tier.active{background:var(--blue);border-color:var(--blue-border)}
@@ -97,7 +98,7 @@ td.margin{color:var(--green)}
 <div class="container">
   <div class="intro">
     <h1>Умови для дилерів HYBRO</h1>
-    <p>Знижка залежить від обсягу закупівлі — додавайте товари кнопками <b>+</b> у таблицях, і система сама покаже ваш рівень, ціни та заробіток.</p>
+    <p>Знижка залежить від обсягу закупівлі — додавайте товари кнопками <b>+</b> у таблицях, і система сама покаже ваш рівень, ціни та заробіток. Або натисніть на рівень нижче, щоб побачити ціни з обраною знижкою.</p>
     <div class="tiers" id="tiers"></div>
     <div class="tier-progress" id="tier-progress"></div>
     <div class="margin-badge" id="margin-badge"></div>
@@ -175,17 +176,21 @@ const sections=[
 
 // ═══ СТАН ═══
 let qty={};            // 'si-ri' -> кількість
+let manualDisc=null;   // null = авто за обсягом, число = обрано вручну
 
 const f=n=>Math.round(n).toLocaleString('uk-UA');
 const price=base=>base;
 
 // Поточний рівень: найвищий, для якого сума закупівлі (з ПДВ) досягає порогу
 function currentTier(){
+  if(manualDisc!==null) return tiers.find(t=>t.disc===manualDisc);
   const retailVat=totalRetailVat();
   let t=tiers[0];
   for(const tier of tiers){ if(retailVat*(1-tier.disc)>=tier.min) t=tier; }
   return t;
 }
+function setManual(d){manualDisc=d;render();}
+function setAuto(){manualDisc=null;render();}
 function totalRetailVat(){
   let s=0;
   sections.forEach((sec,si)=>sec.rows.forEach((r,ri)=>{s+=(qty[si+'-'+ri]||0)*r[1];}));
@@ -199,16 +204,18 @@ function render(){
   const d=tier.disc;
   // Рівні
   document.getElementById('tiers').innerHTML=tiers.map(t=>`
-    <div class="tier${t===tier?' active':''}">
+    <div class="tier${t===tier?' active':''}" onclick="setManual(${t.disc})">
       <div class="t-disc">−${Math.round(t.disc*100)}%</div>
       <div class="t-min">${t.min===0?'будь-яка сума':'від '+f(t.min)+' ₴'}</div>
     </div>`).join('');
   // Прогрес до наступного рівня
   const next=tiers[tiers.indexOf(tier)+1];
   const buyVat=totalRetailVat()*(1-d);
-  document.getElementById('tier-progress').innerHTML = next
-    ? `До рівня <b>−${Math.round(next.disc*100)}%</b> залишилось <b>${f(Math.max(0,next.min-buyVat))} ₴</b> закупівлі`
-    : `Максимальний рівень знижки 🎉`;
+  document.getElementById('tier-progress').innerHTML = manualDisc!==null
+    ? `Знижку −${Math.round(d*100)}% обрано вручну · <a href="#" onclick="setAuto();return false" style="color:var(--blue-text)">рахувати автоматично за обсягом</a>`
+    : (next
+      ? `До рівня <b>−${Math.round(next.disc*100)}%</b> залишилось <b>${f(Math.max(0,next.min-buyVat))} ₴</b> закупівлі`
+      : `Максимальний рівень знижки 🎉`);
   // Бейдж маржі
   document.getElementById('margin-badge').textContent=`Ваша маржа зараз: ${Math.round(d/(1-d)*100)}% від закупівлі`;
   // Таблиці
