@@ -187,9 +187,9 @@ const price=base=>base;
 // Поточний рівень: найвищий, для якого сума закупівлі (з ПДВ) досягає порогу
 function currentTier(){
   if(manualDisc!==null) return tiers.find(t=>t.disc===manualDisc);
-  const retailVat=totalRetailVat();
+  const retail=totalRetailVat();
   let t=tiers[0];
-  for(const tier of tiers){ if(retailVat*(1-tier.disc)>=tier.min) t=tier; }
+  for(const tier of tiers){ if(retail*(1-tier.disc)>=tier.min) t=tier; }
   return t;
 }
 function setManual(d){manualDisc=d;render();}
@@ -213,11 +213,11 @@ function render(){
     </div>`).join('');
   // Прогрес до наступного рівня
   const next=tiers[tiers.indexOf(tier)+1];
-  const buyVat=totalRetailVat()*(1-d);
+  const retail=totalRetailVat();
   document.getElementById('tier-progress').innerHTML = manualDisc!==null
     ? `Знижку −${Math.round(d*100)}% обрано вручну · <a href="#" onclick="setAuto();return false" style="color:var(--blue-text)">рахувати автоматично за обсягом</a>`
     : (next
-      ? `До рівня <b>−${Math.round(next.disc*100)}%</b> залишилось <b>${f(Math.max(0,next.min-buyVat))} ₴</b> закупівлі`
+      ? `До рівня <b>−${Math.round(next.disc*100)}%</b> залишилось додати товару на <b>${f(Math.max(0,next.min/(1-next.disc)-retail))} ₴</b>, щоб закупівля досягла ${f(next.min)} ₴`
       : `Максимальний рівень знижки 🎉`);
   // Бейдж маржі
   document.getElementById('margin-badge').textContent=`Ваша маржа зараз: ${Math.round(d/(1-d)*100)}% від закупівлі`;
